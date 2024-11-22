@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lecture de son</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
+    <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
+</head>
+
+<body>
+
+    <div class="bg-gray-100 p-4 flex h-full gap-3 flex-wrap">
+        <div class="bg-white p-8 rounded-lg shadow-md w-full md:w-80">
+            <!-- Album Cover -->
+            <img src="https://canto-wp-media.s3.amazonaws.com/app/uploads/2019/11/19191845/audio-file-types-32.jpg"
+                alt="idk - Highvyn, Taylor Shin" class="w-64 h-64 mx-auto rounded-lg mb-4 shadow-lg shadow-red-50">
+            <!-- Song Title -->
+            <h2 class="text-xl font-semibold text-red-500 text-center" id="songTitle">Song Title</h2>
+            <!-- Artist Name -->
+            <p class="text-gray-600 text-sm text-center" id="artistName">Artist Name</p>
+            <!-- Music Controls -->
+            <div class="mt-6 flex justify-center items-center">
+                <button class="p-3 rounded-full bg-gray-200 hover:bg-gray-300 focus:outline-none" id="prev">
+                    <svg width="64px" height="64px" class="w-7 h-7 text-gray-600" fill="none"
+                        xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960">
+                        <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
+                        <g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g>
+                        <g id="SVGRepo_iconCarrier">
+                            <path
+                                d="M480-80q-75 0-140.5-28T225-185q-49-49-77-114.5T120-440h60q0 125 87.5 212.5T480-140q125 0 212.5-87.5T780-440q0-125-85-212.5T485-740h-22l73 73-42 42-147-147 147-147 41 41-78 78h23q75 0 140.5 28T735-695q49 49 77 114.5T840-440q0 75-28 140.5T735-185q-49 49-114.5 77T480-80ZM380-310v-50h127v-56H380v-155h176v49H430v57h92q14 0 24 10t10 24v87q0 14-10 24t-24 10H380Z"
+                                fill="#000000" />
+                        </g>
+                    </svg>
+                </button>
+                <button class="p-4 rounded-full bg-gray-200 hover:bg-gray-300 focus:outline-none mx-4" id="playSound">
+                    <svg width="64px" height="64px" viewBox="0 0 24 24" class="w-9 h-9 text-gray-600" fill="none"
+                        xmlns="http://www.w3.org/2000/svg" id="pause_btn" style="display: none;">
+                        <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
+                        <g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g>
+                        <g id="SVGRepo_iconCarrier">
+                            <path
+                                d="M2 6C2 4.11438 2 3.17157 2.58579 2.58579C3.17157 2 4.11438 2 6 2C7.88562 2 8.82843 2 9.41421 2.58579C10 3.17157 10 4.11438 10 6V18C10 19.8856 10 20.8284 9.41421 21.4142C8.82843 22 7.88562 22 6 22C4.11438 22 3.17157 22 2.58579 21.4142C2 20.8284 2 19.8856 2 18V6Z"
+                                fill="#000000"></path>
+                            <path
+                                d="M14 6C14 4.11438 14 3.17157 14.5858 2.58579C15.1716 2 16.1144 2 18 2C19.8856 2 20.8284 2 21.4142 2.58579C22 3.17157 22 4.11438 22 6V18C22 19.8856 22 20.8284 21.4142 21.4142C20.8284 22 19.8856 22 18 22C16.1144 22 15.1716 22 14.5858 21.4142C14 20.8284 14 19.8856 14 18V6Z"
+                                fill="#000000"></path>
+                        </g>
+                    </svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960" width="64px" height="64px"
+                        class="w-9 h-9 text-gray-600" fill="none" id="play_btn">
+                        <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
+                        <g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g>
+                        <g id="SVGRepo_iconCarrier">
+                            <path d="M320-203v-560l440 280-440 280Zm60-280Zm0 171 269-171-269-171v342Z"
+                                fill="#000000" />
+                        </g>
+                    </svg>
+                </button>
+                <button class="p-3 rounded-full bg-gray-200 hover:bg-gray-300 focus:outline-none" id="next">
+                    <svg width="64px" height="64px" viewBox="0 -960 960 960" class="w-7 h-7 text-gray-600" fill="none"
+                        xmlns="http://www.w3.org/2000/svg">
+                        <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
+                        <g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g>
+                        <g id="SVGRepo_iconCarrier">
+                            <path
+                                d="M480-80q-75 0-140.5-28T225-185q-49-49-77-114.5T120-440q0-75 28-140.5T225-695q49-49 114.5-77T480-800h21l-78-78 41-41 147 147-147 147-41-41 74-74h-17q-125.36 0-212.68 87.32Q180-565.36 180-440q0 125.36 87.32 212.68Q354.64-140 480-140q125.36 0 212.68-87.32Q780-314.64 780-440h60q0 75-28 140.5T735-185q-49 49-114.5 77T480-80ZM380-310v-50h127v-56H380v-155h176v49H430v57h92q14.45 0 24.22 9.77Q556-445.45 556-431v87q0 14.45-9.78 24.23Q536.45-310 522-310H380Z"
+                                fill="#000000" />
+                        </g>
+                    </svg>
+                </button>
+            </div>
+            <!-- Progress Bar -->
+            <div class="mt-6 bg-gray-200 h-2 rounded-full">
+                <div class="bg-red-500 h-2 rounded-full w-0" id="progress-bar"></div>
+            </div>
+            <!-- Time Information -->
+            <div class="flex justify-between mt-2 text-sm text-gray-600">
+                <span id="elapsed">00:00</span>
+                <span id="total"></span>
+            </div>
+        </div>
+        <!-- Liste des audios -->
+        <div class="bg-white p-8 rounded-lg shadow-md flex-1 w-full md:w-20">
+            <button id="selectFolder" class="bg-red-500 hover:bg-red-600 text-white py-2 px-4 rounded mb-4">
+                Sélectionner un dossier
+            </button>
+            <div id="audioList" class="flex flex-col p-5"></div>
+        </div>
+    </div>
+
+    <!-- Balise audio avec le fichier source -->
+    <audio id="audioPlayer" style="display: none;">
+        <source type="audio/mpeg">
+        Votre navigateur ne supporte pas la balise audio.
+    </audio>
+
+    <script>
+        // Récupérer les éléments HTML
+        const playSound = document.getElementById('playSound');
+        const audio = document.getElementById('audioPlayer');
+        const prev = document.getElementById('prev');
+        const next = document.getElementById('next');
+        const elapsedSpan = document.getElementById('elapsed');
+        const totalSpan = document.getElementById('total');
+        const progressBar = document.getElementById('progress-bar');
+        const pause_btn = document.getElementById('pause_btn');
+        const play_btn = document.getElementById('play_btn');
+        const songTitle = document.getElementById('songTitle');
+        const artistName = document.getElementById('artistName');
+        const selectFolder = document.getElementById('selectFolder');
+        const audioList = document.getElementById('audioList');
+
+        let audioFiles = [];
+        let currentIndex = 0;
+
+        // Fonction pour afficher la liste des fichiers audio
+        function updateAudioList() {
+            audioList.innerHTML = '';
+            audioFiles.forEach((file, index) => {
+                addItemList(index, file);
+            });
+        }
+
+        // function addItemList(index, file){
+        //     // Créer le conteneur principal
+        //     const div = document.createElement('div');
+        //     div.className = 'flex border-b py-3 cursor-pointer hover:shadow-md px-2 audio-item';
+
+        //     // Créer l'élément image
+        //     const img = document.createElement('img');
+        //     img.className = 'w-10 h-10 object-cover rounded-lg';
+        //     img.alt = 'Audio file';
+        //     img.src = 'https://upload.wikimedia.org/wikipedia/commons/thumb/5/5f/Apple_Music_icon.svg/1200px-Apple_Music_icon.svg.png'; // Image par défaut
+
+        //     // Créer le conteneur pour les textes
+        //     const textDiv = document.createElement('div');
+        //     textDiv.className = 'flex flex-col px-2 w-full';
+
+        //     // Créer le titre de l'audio
+        //     const title = document.createElement('span');
+        //     title.className = 'text-sm text-red-500 capitalize font-semibold pt-1';
+        //     title.textContent = file.name; 
+
+        //     // Créer l'artiste 
+        //     const artist = document.createElement('span');
+        //     artist.className = 'text-xs text-gray-500 uppercase font-medium';
+        //     artist.textContent = "Artiste inconnu"; 
+
+        //     // creer le boutonn supprimer
+        //     const supButton = document.createElement('span');
+        //     supButton.className = 'text-sm text-red-800 font-bold';
+        //     supButton.textContent = "Supprimer de la liste";
+
+        //     // Ajouter les éléments dans le conteneur de texte
+        //     textDiv.appendChild(title);
+        //     textDiv.appendChild(artist);
+
+        //     // Ajouter l'image et le texte dans le conteneur principal
+        //     div.appendChild(img);
+        //     div.appendChild(textDiv);
+
+        //     // Ajouter l'événement onClick pour jouer l'audio
+        //     div.onclick = () => playAudio(index);
+
+        //     // Ajouter le div à la liste
+        //     audioList.appendChild(div);
+
+        //     audioList.classList.add('border-l-4','border-red-500')
+        // }
+
+        // Fonction pour mettre à jour l'audio actif dans la liste
+
+        function addItemList(index, file) {
+            // Créer le conteneur principal
+            const div = document.createElement('div');
+            div.className = 'flex justify-between items-center border-b py-3 cursor-pointer hover:shadow-md px-2 audio-item';
+
+            // Créer l'élément image
+            const img = document.createElement('img');
+            img.className = 'w-10 h-10 object-cover rounded-lg';
+            img.alt = 'Audio file';
+            img.src = 'https://upload.wikimedia.org/wikipedia/commons/thumb/5/5f/Apple_Music_icon.svg/1200px-Apple_Music_icon.svg.png'; // Image par défaut
+
+            // Créer le conteneur pour les textes
+            const textDiv = document.createElement('div');
+            textDiv.className = 'flex flex-col px-2 w-full';
+
+            // Créer le titre de l'audio
+            const title = document.createElement('span');
+            title.className = 'text-sm text-red-500 capitalize font-semibold pt-1';
+            title.textContent = file.name;
+
+            // Créer l'artiste 
+            const artist = document.createElement('span');
+            artist.className = 'text-xs text-gray-500 uppercase font-medium';
+            artist.textContent = "Artiste inconnu";
+
+            // Créer le bouton supprimer
+            const supButton = document.createElement('ion-icon');
+            supButton.className = 'w-6 h-6 cursor-pointer hover:opacity-80 text-red-500';
+            supButton.setAttribute("name","trash-outline");
+
+            // Ajouter un événement au bouton pour supprimer l'élément de la liste
+            supButton.onclick = (event) => {
+                event.stopPropagation();
+                div.remove();
+                // audioList.childNodes[index].remove();
+            };
+
+            // Ajouter les éléments dans le conteneur de texte
+            textDiv.appendChild(title);
+            textDiv.appendChild(artist);
+
+            // Ajouter l'image, le texte et le bouton dans le conteneur principal
+            div.appendChild(img);
+            div.appendChild(textDiv);
+            div.appendChild(supButton);
+
+            // Ajouter l'événement onClick pour jouer l'audio
+            div.onclick = () => playAudio(index);
+
+            // Ajouter le div à la liste
+            audioList.appendChild(div);
+        }
+
+
+        function updateActiveAudio(activeIndex) {
+            const audioItems = document.querySelectorAll('.audio-item');
+
+            audioItems.forEach(item => item.classList.remove('border-red-500'));
+
+            if (audioItems[activeIndex]) {
+                audioItems[activeIndex].classList.add('border-red-500');
+            }
+        }
+
+        // Jouer un fichier audio
+        function playAudio(index) {
+            if (index >= 0 && index < audioFiles.length) {
+                currentIndex = index;
+                const file = audioFiles[currentIndex];
+                audio.src = URL.createObjectURL(file);
+                audio.play();
+                hidePlayBoutton();
+                updateActiveAudio(index);
+            } else {
+                showPlayButton();
+            }
+        }
+
+        // Sélectionner un dossier et charger les fichiers audio
+        selectFolder.addEventListener('click', async () => {
+            try {
+                const dirHandle = await window.showDirectoryPicker();
+                audioFiles = [];
+                for await (const entry of dirHandle.values()) {
+                    if (entry.kind === 'file' && entry.name.match(/\.(mp3|wav|ogg)$/i)) {
+                        const file = await entry.getFile();
+                        audioFiles.push(file);
+                    }
+                }
+                updateAudioList();
+            } catch (error) {
+                console.error('Erreur lors de la sélection du dossier:', error);
+            }
+        });
+
+        // Mettre à jour le temps total une fois que les métadonnées sont chargées
+        audio.addEventListener('loadedmetadata', () => {
+            totalSpan.textContent = formatTime(audio.duration);
+
+            songTitle.innerText = audioList.childNodes[currentIndex].innerText.split('.')[0];
+            artistName.innerText = 'Artiste inconnu';
+        });
+
+        // Mettre à jour le temps écoulé en temps réel
+        audio.addEventListener('timeupdate', () => {
+            elapsedSpan.textContent = formatTime(audio.currentTime);
+
+            const progressPercentage = (audio.currentTime / audio.duration) * 100;
+            progressBar.style.width = `${progressPercentage}%`;
+        });
+
+        // Réinitialiser la barre lorsque l'audio se termine
+        audio.addEventListener('ended', () => {
+            if (currentIndex < audioFiles.length - 1) {
+                playAudio(currentIndex + 1);
+            } else {
+                progressBar.style.width = '0%';
+                play_btn.style.display = 'block';
+                pause_btn.style.display = 'none';
+            }
+        });
+
+        // Fonction pour formater le temps (en secondes) en mm:ss
+        function formatTime(seconds) {
+            const minutes = Math.floor(seconds / 60);
+            const secs = Math.floor(seconds % 60);
+            return `${minutes}:${secs < 10 ? '0' : ''}${secs}`;
+        }
+
+        function showPlayButton() {
+            play_btn.style.display = 'block';
+            pause_btn.style.display = 'none';
+        }
+
+        function hidePlayBoutton() {
+            play_btn.style.display = 'none';
+            pause_btn.style.display = 'block';
+        }
+
+        // Ajouter un événement pour jouer le son
+        playSound.addEventListener('click', () => {
+
+            if (audio.paused && audio.src) {
+                playAudio(currentIndex)
+            } else {
+                audio.pause();
+                showPlayButton();
+            }
+        });
+
+        prev.addEventListener('click', () => {
+            if (!audio.paused) {
+                // Reculer de 5 secondes
+                audio.currentTime = Math.max(0, audio.currentTime - 5);
+            }
+        });
+
+        next.addEventListener('click', () => {
+            if (!audio.paused) {
+                // Avancer de 5 secondes
+                audio.currentTime = Math.min(audio.duration, audio.currentTime + 5);
+            }
+        });
+    </script>
+</body>
+
+</html>
