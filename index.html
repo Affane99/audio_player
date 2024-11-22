@@ -84,10 +84,12 @@
         </div>
         <!-- Liste des audios -->
         <div class="bg-white p-8 rounded-lg shadow-md flex-1 w-full md:w-20">
-            <button id="selectFolder" class="bg-red-500 hover:bg-red-600 text-white py-2 px-4 rounded mb-4">
+            <input id="selectFolder" type="file" webkitdirectory directory multiple class="hidden" />
+            <label for="selectFolder"
+                class="bg-red-500 hover:bg-red-600 text-white py-2 px-4 rounded mb-4 cursor-pointer">
                 Sélectionner un dossier
-            </button>
-            <div id="audioList" class="flex flex-col p-5"></div>
+            </label>
+            <div id="audioList" class="flex flex-col p-4 mt-4"></div>
         </div>
     </div>
 
@@ -113,63 +115,28 @@
         const selectFolder = document.getElementById('selectFolder');
         const audioList = document.getElementById('audioList');
 
+        let selectedDiv = null;
         let audioFiles = [];
         let currentIndex = 0;
 
         // Fonction pour afficher la liste des fichiers audio
         function updateAudioList() {
             audioList.innerHTML = '';
+
+            if (!audio.src) {
+                currentIndex = 0;
+            }
+
+            if (audioFiles.length > 0) {
+                audioList.classList.add("border-l-4", "border-red-500");
+            }
+
             audioFiles.forEach((file, index) => {
                 addItemList(index, file);
             });
+
+            updateActiveAudio(currentIndex);
         }
-
-        // function addItemList(index, file){
-        //     // Créer le conteneur principal
-        //     const div = document.createElement('div');
-        //     div.className = 'flex border-b py-3 cursor-pointer hover:shadow-md px-2 audio-item';
-
-        //     // Créer l'élément image
-        //     const img = document.createElement('img');
-        //     img.className = 'w-10 h-10 object-cover rounded-lg';
-        //     img.alt = 'Audio file';
-        //     img.src = 'https://upload.wikimedia.org/wikipedia/commons/thumb/5/5f/Apple_Music_icon.svg/1200px-Apple_Music_icon.svg.png'; // Image par défaut
-
-        //     // Créer le conteneur pour les textes
-        //     const textDiv = document.createElement('div');
-        //     textDiv.className = 'flex flex-col px-2 w-full';
-
-        //     // Créer le titre de l'audio
-        //     const title = document.createElement('span');
-        //     title.className = 'text-sm text-red-500 capitalize font-semibold pt-1';
-        //     title.textContent = file.name; 
-
-        //     // Créer l'artiste 
-        //     const artist = document.createElement('span');
-        //     artist.className = 'text-xs text-gray-500 uppercase font-medium';
-        //     artist.textContent = "Artiste inconnu"; 
-
-        //     // creer le boutonn supprimer
-        //     const supButton = document.createElement('span');
-        //     supButton.className = 'text-sm text-red-800 font-bold';
-        //     supButton.textContent = "Supprimer de la liste";
-
-        //     // Ajouter les éléments dans le conteneur de texte
-        //     textDiv.appendChild(title);
-        //     textDiv.appendChild(artist);
-
-        //     // Ajouter l'image et le texte dans le conteneur principal
-        //     div.appendChild(img);
-        //     div.appendChild(textDiv);
-
-        //     // Ajouter l'événement onClick pour jouer l'audio
-        //     div.onclick = () => playAudio(index);
-
-        //     // Ajouter le div à la liste
-        //     audioList.appendChild(div);
-
-        //     audioList.classList.add('border-l-4','border-red-500')
-        // }
 
         // Fonction pour mettre à jour l'audio actif dans la liste
 
@@ -201,13 +168,22 @@
             // Créer le bouton supprimer
             const supButton = document.createElement('ion-icon');
             supButton.className = 'w-6 h-6 cursor-pointer hover:opacity-80 text-red-500';
-            supButton.setAttribute("name","trash-outline");
+            supButton.setAttribute("name", "trash-outline");
 
             // Ajouter un événement au bouton pour supprimer l'élément de la liste
             supButton.onclick = (event) => {
                 event.stopPropagation();
-                div.remove();
-                // audioList.childNodes[index].remove();
+                if (currentIndex === index) {
+                    alert("L'element est en cours de lecture");
+                } else {
+                    div.remove();
+                    audioFiles = [...audioFiles.filter((_, i) => i !== index)];
+                    updateAudioList();
+                    if (audioFiles.length === 0) {
+                        audioList.classList.remove("border-l-4", "border-red-500");
+                    }
+
+                }
             };
 
             // Ajouter les éléments dans le conteneur de texte
@@ -232,17 +208,24 @@
 
             audioItems.forEach(item => item.classList.remove('border-red-500'));
 
-            if (audioItems[activeIndex]) {
+            if (audioItems[activeIndex] && audio.src) {
                 audioItems[activeIndex].classList.add('border-red-500');
+            }
+
+            if (selectedDiv) {
+                selectedDiv.classList.add('border-red-500');
             }
         }
 
         // Jouer un fichier audio
         function playAudio(index) {
             if (index >= 0 && index < audioFiles.length) {
-                currentIndex = index;
-                const file = audioFiles[currentIndex];
-                audio.src = URL.createObjectURL(file);
+                if (currentIndex !== index || !audio.src) {
+                    currentIndex = index;
+                    const file = audioFiles[currentIndex];
+                    audio.src = URL.createObjectURL(file);
+                }
+                selectedDiv = document.getElementById(currentIndex);
                 audio.play();
                 hidePlayBoutton();
                 updateActiveAudio(index);
@@ -251,20 +234,18 @@
             }
         }
 
-        // Sélectionner un dossier et charger les fichiers audio
-        selectFolder.addEventListener('click', async () => {
+        selectFolder.addEventListener('change', async (event) => {
             try {
-                const dirHandle = await window.showDirectoryPicker();
+                const files = event.target.files;
                 audioFiles = [];
-                for await (const entry of dirHandle.values()) {
-                    if (entry.kind === 'file' && entry.name.match(/\.(mp3|wav|ogg)$/i)) {
-                        const file = await entry.getFile();
+                for (const file of files) {
+                    if (file.name.match(/\.(mp3|wav|ogg)$/i)) {
                         audioFiles.push(file);
                     }
                 }
                 updateAudioList();
             } catch (error) {
-                console.error('Erreur lors de la sélection du dossier:', error);
+                console.error('Erreur lors de la sélection des fichiers:', error);
             }
         });
 
@@ -290,9 +271,17 @@
                 playAudio(currentIndex + 1);
             } else {
                 progressBar.style.width = '0%';
-                play_btn.style.display = 'block';
-                pause_btn.style.display = 'none';
+                showPlayButton();
+                elapsedSpan.textContent = "00:00"
             }
+        });
+
+        audio.addEventListener('pause', () => {
+            showPlayButton();
+        });
+
+        audio.addEventListener('play', () => {
+            hidePlayBoutton();
         });
 
         // Fonction pour formater le temps (en secondes) en mm:ss
