@@ -73,7 +73,7 @@
                 </button>
             </div>
             <!-- Progress Bar -->
-            <div class="mt-6 bg-gray-200 h-2 rounded-full">
+            <div class="mt-6 bg-gray-200 h-2 rounded-full cursor-pointer" id="progress-container">
                 <div class="bg-red-500 h-2 rounded-full w-0" id="progress-bar"></div>
             </div>
             <!-- Time Information -->
@@ -85,8 +85,14 @@
         <!-- Liste des audios -->
         <div class="bg-white p-8 rounded-lg shadow-md flex-1 w-full md:w-20">
             <input id="selectFolder" type="file" webkitdirectory directory multiple class="hidden" />
-            <label for="selectFolder"
-                class="bg-red-500 hover:bg-red-600 text-white py-2 px-4 rounded mb-4 cursor-pointer">
+            <input id="selectFiles" type="file" multiple accept="audio/*" class="hidden" />
+
+            <label for="selectFiles" id="labelFiles"
+                class="bg-red-500 hover:bg-red-600 text-white py-2 px-4 rounded mb-4 cursor-pointer hidden">
+                Sélectionner des fichiers
+            </label>
+            <label for="selectFolder" id="labelFolder"
+                class="bg-red-500 hover:bg-red-600 text-white py-2 px-4 rounded mb-4 cursor-pointer hidden">
                 Sélectionner un dossier
             </label>
             <div id="audioList" class="flex flex-col p-4 mt-4"></div>
@@ -98,234 +104,269 @@
         <source type="audio/mpeg">
         Votre navigateur ne supporte pas la balise audio.
     </audio>
-
     <script>
-        // Récupérer les éléments HTML
-        const playSound = document.getElementById('playSound');
-        const audio = document.getElementById('audioPlayer');
-        const prev = document.getElementById('prev');
-        const next = document.getElementById('next');
-        const elapsedSpan = document.getElementById('elapsed');
-        const totalSpan = document.getElementById('total');
-        const progressBar = document.getElementById('progress-bar');
-        const pause_btn = document.getElementById('pause_btn');
-        const play_btn = document.getElementById('play_btn');
-        const songTitle = document.getElementById('songTitle');
-        const artistName = document.getElementById('artistName');
-        const selectFolder = document.getElementById('selectFolder');
-        const audioList = document.getElementById('audioList');
+        //#region ==== Sélection des éléments HTML ====
+        const elements = {
+            playSound: document.getElementById('playSound'),
+            audio: document.getElementById('audioPlayer'),
+            prev: document.getElementById('prev'),
+            next: document.getElementById('next'),
+            elapsedSpan: document.getElementById('elapsed'),
+            totalSpan: document.getElementById('total'),
+            progressBar: document.getElementById('progress-bar'),
+            pauseBtn: document.getElementById('pause_btn'),
+            playBtn: document.getElementById('play_btn'),
+            songTitle: document.getElementById('songTitle'),
+            artistName: document.getElementById('artistName'),
+            selectFolder: document.getElementById('selectFolder'),
+            audioList: document.getElementById('audioList'),
+            progressContainer: document.getElementById('progress-container'),
+            selectFiles: document.getElementById('selectFiles'),
+            labelFiles: document.getElementById('labelFiles'),
+            labelFolder: document.getElementById('labelFolder'),
+        };
+        //#endregion
 
-        let selectedDiv = null;
         let audioFiles = [];
         let currentIndex = 0;
 
-        // Fonction pour afficher la liste des fichiers audio
+        //#region ==== Mise à jour de la liste des fichiers audio ====
         function updateAudioList() {
-            audioList.innerHTML = '';
-
-            if (!audio.src) {
-                currentIndex = 0;
-            }
+            elements.audioList.innerHTML = '';
 
             if (audioFiles.length > 0) {
-                audioList.classList.add("border-l-4", "border-red-500");
+                elements.audioList.classList.add("border-l-4", "border-red-500");
+            } else {
+                elements.audioList.classList.remove("border-l-4", "border-red-500");
             }
 
-            audioFiles.forEach((file, index) => {
-                addItemList(index, file);
-            });
-
-            updateActiveAudio(currentIndex);
+            audioFiles.forEach((file, index) => addItemToList(index, file));
+            highlightActiveAudio(currentIndex);
         }
+        //#endregion
 
-        // Fonction pour mettre à jour l'audio actif dans la liste
-
-        function addItemList(index, file) {
-            // Créer le conteneur principal
+        //#region ==== Ajouter un fichier à la liste ====
+        function addItemToList(index, file) {
             const div = document.createElement('div');
             div.className = 'flex justify-between items-center border-b py-3 cursor-pointer hover:shadow-md px-2 audio-item';
+            div.onclick = () => playAudio(index);
 
-            // Créer l'élément image
             const img = document.createElement('img');
             img.className = 'w-10 h-10 object-cover rounded-lg';
             img.alt = 'Audio file';
-            img.src = 'https://upload.wikimedia.org/wikipedia/commons/thumb/5/5f/Apple_Music_icon.svg/1200px-Apple_Music_icon.svg.png'; // Image par défaut
+            img.src = 'https://upload.wikimedia.org/wikipedia/commons/thumb/5/5f/Apple_Music_icon.svg/1200px-Apple_Music_icon.svg.png';
 
-            // Créer le conteneur pour les textes
             const textDiv = document.createElement('div');
             textDiv.className = 'flex flex-col px-2 w-full';
 
-            // Créer le titre de l'audio
             const title = document.createElement('span');
             title.className = 'text-sm text-red-500 capitalize font-semibold pt-1';
             title.textContent = file.name;
 
-            // Créer l'artiste 
             const artist = document.createElement('span');
             artist.className = 'text-xs text-gray-500 uppercase font-medium';
-            artist.textContent = "Artiste inconnu";
+            artist.textContent = 'Artiste inconnu';
 
-            // Créer le bouton supprimer
             const supButton = document.createElement('ion-icon');
             supButton.className = 'w-6 h-6 cursor-pointer hover:opacity-80 text-red-500';
-            supButton.setAttribute("name", "trash-outline");
-
-            // Ajouter un événement au bouton pour supprimer l'élément de la liste
+            supButton.setAttribute('name', 'trash-outline');
             supButton.onclick = (event) => {
                 event.stopPropagation();
-                if (currentIndex === index) {
-                    alert("L'element est en cours de lecture");
+                if (currentIndex === index && elements.audio.src) {
+                    alert("L'élément est en cours de lecture");
                 } else {
                     div.remove();
-                    audioFiles = [...audioFiles.filter((_, i) => i !== index)];
+                    audioFiles.splice(index, 1);
                     updateAudioList();
-                    if (audioFiles.length === 0) {
-                        audioList.classList.remove("border-l-4", "border-red-500");
-                    }
-
                 }
             };
 
-            // Ajouter les éléments dans le conteneur de texte
             textDiv.appendChild(title);
             textDiv.appendChild(artist);
-
-            // Ajouter l'image, le texte et le bouton dans le conteneur principal
             div.appendChild(img);
             div.appendChild(textDiv);
             div.appendChild(supButton);
-
-            // Ajouter l'événement onClick pour jouer l'audio
-            div.onclick = () => playAudio(index);
-
-            // Ajouter le div à la liste
-            audioList.appendChild(div);
+            elements.audioList.appendChild(div);
         }
+        //#endregion
 
-
-        function updateActiveAudio(activeIndex) {
-            const audioItems = document.querySelectorAll('.audio-item');
-
-            audioItems.forEach(item => item.classList.remove('border-red-500'));
-
-            if (audioItems[activeIndex] && audio.src) {
-                audioItems[activeIndex].classList.add('border-red-500');
-            }
-
-            if (selectedDiv) {
-                selectedDiv.classList.add('border-red-500');
-            }
+        //#region ==== Mettre en évidence l'audio actif ====
+        function highlightActiveAudio(index) {
+            document.querySelectorAll('.audio-item').forEach((item, idx) => {
+                item.classList.toggle('border-red-500', idx === index);
+            });
         }
+        //#endregion
 
-        // Jouer un fichier audio
+        //#region ==== Lecture d'un fichier audio ====
         function playAudio(index) {
-            if (index >= 0 && index < audioFiles.length) {
-                if (currentIndex !== index || !audio.src) {
-                    currentIndex = index;
-                    const file = audioFiles[currentIndex];
-                    audio.src = URL.createObjectURL(file);
-                }
-                selectedDiv = document.getElementById(currentIndex);
-                audio.play();
-                hidePlayBoutton();
-                updateActiveAudio(index);
-            } else {
-                showPlayButton();
-            }
-        }
+            if (index < 0 || index >= audioFiles.length) return;
 
-        selectFolder.addEventListener('change', async (event) => {
+            if (currentIndex !== index || !elements.audio.src) {
+                currentIndex = index;
+                elements.audio.src = URL.createObjectURL(audioFiles[index]);
+            }
+            elements.audio.play();
+            togglePlayPauseButton(false);
+            highlightActiveAudio(index);
+        }
+        //#endregion
+
+        //#region ==== Gestion des événements ====
+        elements.selectFolder.addEventListener('change', async (event) => {
             try {
-                const files = event.target.files;
-                audioFiles = [];
-                for (const file of files) {
-                    if (file.name.match(/\.(mp3|wav|ogg)$/i)) {
-                        audioFiles.push(file);
-                    }
-                }
+                const files = Array.from(event.target.files).filter(file =>
+                    file.name.match(/\.(mp3|wav|ogg)$/i)
+                );
+
+                audioFiles = files;
+                currentIndex = 0;
                 updateAudioList();
+                elements.selectFolder.value = '';
+                if (audioFiles.length > 0) {
+                    playAudio(0); // Charger le premier fichier
+                }
             } catch (error) {
                 console.error('Erreur lors de la sélection des fichiers:', error);
             }
         });
 
-        // Mettre à jour le temps total une fois que les métadonnées sont chargées
-        audio.addEventListener('loadedmetadata', () => {
-            totalSpan.textContent = formatTime(audio.duration);
-
-            songTitle.innerText = audioList.childNodes[currentIndex].innerText.split('.')[0];
-            artistName.innerText = 'Artiste inconnu';
-        });
-
-        // Mettre à jour le temps écoulé en temps réel
-        audio.addEventListener('timeupdate', () => {
-            elapsedSpan.textContent = formatTime(audio.currentTime);
-
-            const progressPercentage = (audio.currentTime / audio.duration) * 100;
-            progressBar.style.width = `${progressPercentage}%`;
-        });
-
-        // Réinitialiser la barre lorsque l'audio se termine
-        audio.addEventListener('ended', () => {
-            if (currentIndex < audioFiles.length - 1) {
-                playAudio(currentIndex + 1);
-            } else {
-                progressBar.style.width = '0%';
-                showPlayButton();
-                elapsedSpan.textContent = "00:00"
+        elements.selectFiles.addEventListener('change', (event) => {
+            const files = Array.from(event.target.files);
+            audioFiles = files.filter(file => file.type.startsWith('audio/'));
+            currentIndex = 0;
+            elements.selectFiles.value = '';
+            updateAudioList();
+            if (audioFiles.length > 0) {
+                playAudio(0); // Charger le premier fichier
             }
         });
 
-        audio.addEventListener('pause', () => {
-            showPlayButton();
+        elements.audio.addEventListener('loadedmetadata', () => {
+            elements.totalSpan.textContent = formatTime(elements.audio.duration);
+            elements.songTitle.textContent = audioFiles[currentIndex]?.name.split('.')[0] || '';
+            elements.artistName.textContent = 'Artiste inconnu';
         });
 
-        audio.addEventListener('play', () => {
-            hidePlayBoutton();
+        elements.audio.addEventListener('timeupdate', () => {
+            elements.elapsedSpan.textContent = formatTime(elements.audio.currentTime);
+            elements.progressBar.style.width = `${(elements.audio.currentTime / elements.audio.duration) * 100}%`;
         });
 
-        // Fonction pour formater le temps (en secondes) en mm:ss
+        elements.audio.addEventListener('ended', () => {
+            if (currentIndex < audioFiles.length - 1) {
+                playAudio(currentIndex + 1);
+            } else {
+                elements.progressBar.style.width = '0%';
+                togglePlayPauseButton(true);
+                elements.elapsedSpan.textContent = '00:00';
+            }
+        });
+
+        elements.playSound.addEventListener('click', () => {
+            if (elements.audio.paused && elements.audio.src) {
+                playAudio(currentIndex);
+            } else {
+                elements.audio.pause();
+                togglePlayPauseButton(true);
+            }
+        });
+
+        elements.prev.addEventListener('click', () => {
+            elements.audio.currentTime = Math.max(0, elements.audio.currentTime - 5);
+        });
+
+        elements.next.addEventListener('click', () => {
+            elements.audio.currentTime = Math.min(elements.audio.duration, elements.audio.currentTime + 5);
+        });
+
+        elements.audio.addEventListener('pause', () => {
+            togglePlayPauseButton(true);
+        });
+
+        elements.audio.addEventListener('play', () => {
+            togglePlayPauseButton(false);
+        });
+
+        let isDragging = false; // Indique si l'utilisateur est en train de cliquer-glisser
+
+        // Début du cliquer-glisser
+        elements.progressContainer.addEventListener('mousedown', (event) => {
+            isDragging = true;
+            setAudioProgress(event); // Mettre à jour dès le clic initial
+        });
+
+        // Suivi du glisser
+        elements.progressContainer.addEventListener('mousemove', (event) => {
+            if (isDragging) {
+                setAudioProgress(event); // Mettre à jour pendant le glisser
+            }
+        });
+
+        // Fin du cliquer-glisser
+        document.addEventListener('mouseup', () => {
+            if (isDragging) {
+                isDragging = false;
+            }
+        });
+
+        // (Optionnel) Support des écrans tactiles
+        elements.progressContainer.addEventListener('touchstart', (event) => {
+            isDragging = true;
+            setAudioProgress(event);
+        });
+
+        elements.progressContainer.addEventListener('touchmove', (event) => {
+            if (isDragging) {
+                setAudioProgress(event);
+            }
+        });
+
+        document.addEventListener('touchend', () => {
+            if (isDragging) {
+                isDragging = false;
+            }
+        });
+
+        window.addEventListener('resize', detectDevice);
+        detectDevice();
+        //#endregion
+        //#region  ==== Utilitaires ====
         function formatTime(seconds) {
             const minutes = Math.floor(seconds / 60);
             const secs = Math.floor(seconds % 60);
             return `${minutes}:${secs < 10 ? '0' : ''}${secs}`;
         }
 
-        function showPlayButton() {
-            play_btn.style.display = 'block';
-            pause_btn.style.display = 'none';
+        function togglePlayPauseButton(isPlay) {
+            elements.playBtn.style.display = isPlay ? 'block' : 'none';
+            elements.pauseBtn.style.display = isPlay ? 'none' : 'block';
         }
 
-        function hidePlayBoutton() {
-            play_btn.style.display = 'none';
-            pause_btn.style.display = 'block';
+        // Fonction pour mettre à jour la position de lecture
+        function setAudioProgress(event) {
+            const containerWidth = elements.progressContainer.offsetWidth;
+            const clickX = event.offsetX || event.touches?.[0].clientX - elements.progressContainer.getBoundingClientRect().left;
+            const newTime = Math.max(0, Math.min((clickX / containerWidth) * elements.audio.duration, elements.audio.duration));
+            const progressPercentage = (newTime / elements.audio.duration) * 100;
+            elements.progressBar.style.width = `${progressPercentage}%`;
+            elements.audio.currentTime = newTime;
         }
 
-        // Ajouter un événement pour jouer le son
-        playSound.addEventListener('click', () => {
+        function detectDevice() {
+            const isMobile = window.innerWidth <= 768; // Largeur pour mobiles/tablettes
 
-            if (audio.paused && audio.src) {
-                playAudio(currentIndex)
+            if (isMobile) {
+                elements.labelFiles.classList.remove('hidden');
+                elements.labelFolder.classList.add('hidden');
             } else {
-                audio.pause();
-                showPlayButton();
+                elements.labelFolder.classList.remove('hidden');
+                elements.labelFiles.classList.add('hidden');
             }
-        });
-
-        prev.addEventListener('click', () => {
-            if (!audio.paused) {
-                // Reculer de 5 secondes
-                audio.currentTime = Math.max(0, audio.currentTime - 5);
-            }
-        });
-
-        next.addEventListener('click', () => {
-            if (!audio.paused) {
-                // Avancer de 5 secondes
-                audio.currentTime = Math.min(audio.duration, audio.currentTime + 5);
-            }
-        });
+        }
+        //#endregion
     </script>
+
 </body>
 
 </html>
