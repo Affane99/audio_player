@@ -104,8 +104,49 @@
         <source type="audio/mpeg">
         Votre navigateur ne supporte pas la balise audio.
     </audio>
+
+    <div x-data="{ isOpen: false }" class="hidden" id="modal">
+        <!-- Open modal button -->
+        <button x-on:click="isOpen = true" class="px-4 py-2 bg-red-500 text-white rounded-md hidden" id="openModal">
+            Open Modal </button>
+        <!-- Modal Overlay -->
+        <div x-show="isOpen" class="fixed inset-0 px-2 z-10 overflow-hidden flex items-center justify-center">
+            <div x-show="isOpen" x-transition:enter="transition-opacity ease-out duration-300"
+                x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
+                x-transition:leave="transition-opacity ease-in duration-300" x-transition:leave-start="opacity-100"
+                x-transition:leave-end="opacity-0"
+                class="absolute inset-0 bg-gray-500 bg-opacity-75 transition-opacity"></div>
+            <!-- Modal Content -->
+            <div x-show="isOpen" x-transition:enter="transition-transform ease-out duration-300"
+                x-transition:enter-start="transform scale-75" x-transition:enter-end="transform scale-100"
+                x-transition:leave="transition-transform ease-in duration-300"
+                x-transition:leave-start="transform scale-100" x-transition:leave-end="transform scale-75"
+                class="bg-white rounded-md shadow-xl overflow-hidden max-w-md w-full sm:w-96 md:w-1/2 lg:w-2/3 xl:w-1/3 z-50">
+                <!-- Modal Header -->
+                <div class="bg-red-500 text-white px-4 py-2 flex justify-between">
+                    <h2 class="text-lg font-semibold" id="modal-title">Modal Title</h2>
+                </div>
+                <!-- Modal Body -->
+                <div class="p-4">
+                    <p id="modal-content">This is the content of the modal. You can add any content here. Lorem ipsum
+                        dolor sit amet</p>
+                </div>
+                <!-- Modal Footer -->
+                <div class="border-t px-4 py-2 flex justify-end">
+                    <button x-on:click="isOpen = false"
+                        class="px-3 py-1 bg-red-500 text-white  rounded-md w-full sm:w-auto" id="model-action"> D'accord
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Include Alpine.js -->
+    <script src="https://cdn.jsdelivr.net/npm/alpinejs@2.8.2/dist/alpine.min.js" defer></script>
+
     <script>
-        //#region ==== Sélection des éléments HTML ====
+        // ==== Sélection des éléments HTML ====
+
         const elements = {
             playSound: document.getElementById('playSound'),
             audio: document.getElementById('audioPlayer'),
@@ -124,13 +165,19 @@
             selectFiles: document.getElementById('selectFiles'),
             labelFiles: document.getElementById('labelFiles'),
             labelFolder: document.getElementById('labelFolder'),
+            modalTitle: document.getElementById("modal-title"),
+            modalContent: document.getElementById("modal-content"),
+            openModal: document.getElementById("openModal"),
+            modal:document.getElementById("modal"),
         };
-        //#endregion
+
+        setTimeout(() => {
+            elements.modal.classList.remove('hidden');
+        }, 100);
 
         let audioFiles = [];
-        let currentIndex = 0;
 
-        //#region ==== Mise à jour de la liste des fichiers audio ====
+        // ==== Mise à jour de la liste des fichiers audio ====
         function updateAudioList() {
             elements.audioList.innerHTML = '';
 
@@ -143,12 +190,12 @@
             audioFiles.forEach((file, index) => addItemToList(index, file));
             highlightActiveAudio(currentIndex);
         }
-        //#endregion
 
-        //#region ==== Ajouter un fichier à la liste ====
+        // ==== Ajouter un fichier à la liste ====
         function addItemToList(index, file) {
             const div = document.createElement('div');
             div.className = 'flex justify-between items-center border-b py-3 cursor-pointer hover:shadow-md px-2 audio-item';
+            div.id = `item-${index}`;
             div.onclick = () => playAudio(index);
 
             const img = document.createElement('img');
@@ -170,15 +217,10 @@
             const supButton = document.createElement('ion-icon');
             supButton.className = 'w-6 h-6 cursor-pointer hover:opacity-80 text-red-500';
             supButton.setAttribute('name', 'trash-outline');
+
             supButton.onclick = (event) => {
                 event.stopPropagation();
-                if (currentIndex === index && elements.audio.src) {
-                    alert("L'élément est en cours de lecture");
-                } else {
-                    div.remove();
-                    audioFiles.splice(index, 1);
-                    updateAudioList();
-                }
+                handleDelete(index);
             };
 
             textDiv.appendChild(title);
@@ -188,17 +230,48 @@
             div.appendChild(supButton);
             elements.audioList.appendChild(div);
         }
-        //#endregion
 
-        //#region ==== Mettre en évidence l'audio actif ====
+        // ==== Gestion de la suppression ====
+        function handleDelete(index) {
+            if (index === currentIndex) {
+                // Le fichier est en cours de lecture
+                elements.modalTitle.innerText = "Echec de suppression";
+                elements.modalContent.innerText = "Le fichier est en cours d'utilisation";
+                elements.openModal.click();
+                return;
+            }
+
+            // Supprimer le fichier et mettre à jour la liste
+            audioFiles.splice(index, 1);
+
+            // Ajuster currentIndex si nécessaire
+            if (index < currentIndex) {
+                currentIndex--; // Décaler l'indice actuel si un fichier avant est supprimé
+            }
+
+            // Si plus aucun fichier, arrêter la lecture
+            if (audioFiles.length === 0) {
+                elements.audio.pause();
+                elements.audio.src = '';
+                currentIndex = -1;
+            } else {
+                // Continuer la lecture si besoin
+                if (index < currentIndex || (index === currentIndex && currentIndex >= audioFiles.length)) {
+                    playAudio(Math.max(0, currentIndex - 1));
+                }
+            }
+
+            updateAudioList();
+        }
+
+        // ==== Mettre en évidence l'audio actif ====
         function highlightActiveAudio(index) {
             document.querySelectorAll('.audio-item').forEach((item, idx) => {
                 item.classList.toggle('border-red-500', idx === index);
             });
         }
-        //#endregion
 
-        //#region ==== Lecture d'un fichier audio ====
+        // ==== Lecture d'un fichier audio ====
         function playAudio(index) {
             if (index < 0 || index >= audioFiles.length) return;
 
@@ -206,13 +279,13 @@
                 currentIndex = index;
                 elements.audio.src = URL.createObjectURL(audioFiles[index]);
             }
+
             elements.audio.play();
             togglePlayPauseButton(false);
             highlightActiveAudio(index);
         }
-        //#endregion
 
-        //#region ==== Gestion des événements ====
+        // ==== Gestion des événements ====
         elements.selectFolder.addEventListener('change', async (event) => {
             try {
                 const files = Array.from(event.target.files).filter(file =>
@@ -330,8 +403,8 @@
 
         window.addEventListener('resize', detectDevice);
         detectDevice();
-        //#endregion
-        //#region  ==== Utilitaires ====
+
+        // ==== Utilitaires ====
         function formatTime(seconds) {
             const minutes = Math.floor(seconds / 60);
             const secs = Math.floor(seconds % 60);
@@ -364,7 +437,6 @@
                 elements.labelFiles.classList.add('hidden');
             }
         }
-        //#endregion
     </script>
 
 </body>
